@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000";
+﻿const API_BASE = "http://localhost:3000";
 const SPINNER =
   '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
 
@@ -18,7 +18,8 @@ const elements = {
   button: document.querySelector("#moodRecommendBtn"),
   status: document.querySelector("#moodStatus"),
   error: document.querySelector("#moodError"),
-  result: document.querySelector("#moodResult"),
+  interpretation: document.querySelector("#moodInterpretationResult"),
+  recommendation: document.querySelector("#moodRecommendationResult"),
 };
 
 function ensureKakaoReady() {
@@ -53,6 +54,7 @@ async function searchKakaoPlaces(query) {
             resolve([]);
             return;
           }
+
           resolve(
             addrResults.map((item) => ({
               name: item.road_address?.building_name || item.address_name,
@@ -90,18 +92,10 @@ async function renderKakaoCardMap(container, place) {
   });
 
   const marker = new kakao.maps.Marker({ position, map });
+  void marker;
+
   map.setDraggable(false);
   map.setZoomable(false);
-
-  const infoContent = `
-    <div style="padding: 6px 10px; font-size: 12px; font-weight: 700; color: #1e293b; font-family: sans-serif; text-align: center; background: #fff; min-width: 120px;">
-      ${escapeHtml(place.name)}
-    </div>
-  `;
-
-  const infoWindow = new kakao.maps.InfoWindow({
-    content: infoContent,
-  });
 
   setTimeout(() => {
     map.relayout();
@@ -111,36 +105,7 @@ async function renderKakaoCardMap(container, place) {
   return map;
 }
 
-async function renderKakaoMaps(spots, estimatedLocationName = null) {
-  if (estimatedLocationName) {
-    const estContainer = document.getElementById("estimated-map");
-    if (estContainer) {
-      try {
-        const results = await searchKakaoPlaces(estimatedLocationName);
-        if (results && results.length > 0) {
-          const targetPlace = results[0];
-          await renderKakaoCardMap(estContainer, {
-            name: targetPlace.name,
-            latitude: targetPlace.latitude,
-            longitude: targetPlace.longitude,
-          });
-        } else {
-          const fallbackLat = Number(estContainer.dataset.fallbackLat);
-          const fallbackLng = Number(estContainer.dataset.fallbackLng);
-          if (!isNaN(fallbackLat) && !isNaN(fallbackLng)) {
-            await renderKakaoCardMap(estContainer, {
-              name: estimatedLocationName,
-              latitude: fallbackLat,
-              longitude: fallbackLng,
-            });
-          }
-        }
-      } catch (err) {
-        console.error("추정 위치 지도 렌더링 실패:", err);
-      }
-    }
-  }
-
+async function renderKakaoMaps(spots) {
   for (const [index, spot] of spots.entries()) {
     const container = document.getElementById(`map-${index}`);
     if (!container) continue;
@@ -186,6 +151,7 @@ function setStatus(el, message, animate = false) {
 function clearStatus(el) {
   el.textContent = "";
 }
+
 function showError(el, resultEl, message) {
   el.textContent = message;
   el.classList.add("visible");
@@ -199,20 +165,26 @@ function clearError(el) {
 }
 
 function friendlyError(error) {
-  const msg = error?.message || "";
+  const msg = error?.message || String(error);
+
   if (
     msg.includes("Failed to fetch") ||
     msg.includes("NetworkError") ||
     msg.includes("TypeError")
   ) {
-    return "서버에 연결할 수 없습니다. 서버가 정상적으로 실행 중인지 확인해 주세요.";
+    return "서버 연결에 실패했습니다. 서버가 정상적으로 실행 중인지 확인해 주세요.";
   }
   if (msg === "413" || msg.includes("too large")) {
-    return "업로드한 이미지 용량이 너무 큽니다. 더 작은 크기의 이미지로 다시 시도해 주세요.";
+    return "업로드한 이미지 용량이 너무 큽니다. 더 작은 이미지로 다시 시도해 주세요.";
   }
   if (msg === "500" || msg.includes("Internal Server Error")) {
     return "서버에서 이미지를 분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   }
+
+  if (msg && msg !== "400" && isNaN(msg)) {
+    return msg;
+  }
+
   return "요청을 처리하는 동안 문제가 발생했습니다. 다시 시도해 주세요.";
 }
 
@@ -260,13 +232,10 @@ function setImageFromFile(file, imageEl, placeholderEl, uploadBoxEl, btnEl) {
 
     canvas.width = width;
     canvas.height = height;
-
     ctx.drawImage(img, 0, 0, width, height);
 
     const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-
     state.imageBase64 = compressedBase64.split(",")[1];
-
     btnEl.disabled = !state.imageBase64 || state.isLoading;
   };
 
@@ -309,7 +278,7 @@ async function renderSpots(spots) {
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
-            이 여행지로 일정 만들기
+            여행지로 일정 만들기
           </button>
         </div>
       </div>
@@ -321,30 +290,43 @@ async function renderSpots(spots) {
   return html;
 }
 
-async function renderMoodResult(data) {
-  let html = "";
-  if (data.moodTags) {
-    html += `
-      <div class="mb-4">
-        <div class="section-label">분위기 해석</div>
-        <div class="mood-tags">
-          ${data.moodTags.terrain ? `<span class="mood-tag">지형: ${escapeHtml(data.moodTags.terrain)}</span>` : ""}
-          ${data.moodTags.weather ? `<span class="mood-tag">날씨: ${escapeHtml(data.moodTags.weather)}</span>` : ""}
-          ${data.moodTags.color ? `<span class="mood-tag">색감: ${escapeHtml(data.moodTags.color)}</span>` : ""}
-          ${data.moodTags.mood ? `<span class="mood-tag">무드: ${escapeHtml(data.moodTags.mood)}</span>` : ""}
-        </div>
-      </div>
-    `;
+function renderMoodInterpretation(data) {
+  const tags = data.moodTags || {};
+  const lines = [];
+
+  if (tags.terrain) lines.push(`지형: ${escapeHtml(tags.terrain)}`);
+  if (tags.weather) lines.push(`날씨: ${escapeHtml(tags.weather)}`);
+  if (tags.color) lines.push(`색감: ${escapeHtml(tags.color)}`);
+  if (tags.mood) lines.push(`분위기: ${escapeHtml(tags.mood)}`);
+
+  if (lines.length === 0) {
+    return '<p class="text-secondary mb-0">분위기 해석 결과가 없습니다.</p>';
   }
-  if (data.recommendation?.spots) {
-    html += `
-      <div>
-        <div class="section-label mb-3">추천 여행지</div>
-        ${await renderSpots(data.recommendation.spots)}
-      </div>
-    `;
-  }
-  return html;
+
+  return `
+    <div class="d-flex flex-column gap-5">
+      ${lines
+        .map(
+          (line) => `
+            <div class="mood-tag" style="display:block; width:100%;">
+              ${line}
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function renderRecommendationResult(data) {
+  if (!data.recommendation?.spots) return "";
+
+  return `
+    <div>
+      <div class="section-label mb-3">추천 여행지 3곳</div>
+      ${await renderSpots(data.recommendation.spots)}
+    </div>
+  `;
 }
 
 async function analyzeMood() {
@@ -352,25 +334,26 @@ async function analyzeMood() {
   const btn = elements.button;
   const statusEl = elements.status;
   const errorEl = elements.error;
-  const resultEl = elements.result;
+  const interpretationEl = elements.interpretation;
+  const recommendationEl = elements.recommendation;
   const requestId = ++state.requestId;
 
   if (!state.imageBase64) {
-    showError(errorEl, resultEl, "이미지를 먼저 업로드해 주세요.");
+    showError(errorEl, recommendationEl, "이미지를 먼저 업로드해 주세요");
+    interpretationEl.innerHTML = "";
     return;
   }
 
   clearError(errorEl);
   clearStatus(statusEl);
+  interpretationEl.innerHTML = "";
+  recommendationEl.innerHTML = "";
+  recommendationEl.classList.remove("visible");
   state.isLoading = true;
   btn.disabled = true;
   btn.innerHTML = SPINNER + "분석 중";
 
-  const steps = [
-    "이미지 분위기 분석 중",
-    "추천 조건 반영 중",
-    "여행지 추천 생성 중",
-  ];
+  const steps = ["분위기 해석 중", "추천 조건 반영 중", "여행지 추천 생성 중"];
   let idx = 0;
   setStatus(statusEl, steps[idx], true);
   const timer = setInterval(() => {
@@ -396,19 +379,20 @@ async function analyzeMood() {
     }
 
     if (requestId !== state.requestId) return;
-    resultEl.innerHTML = await renderMoodResult(data);
+
+    interpretationEl.innerHTML = renderMoodInterpretation(data);
+    recommendationEl.innerHTML = await renderRecommendationResult(data);
 
     await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);
-
     await new Promise((r) => setTimeout(r, 100));
 
-    resultEl.classList.add("visible");
-    await renderKakaoMaps(data.recommendation.spots, null);
+    recommendationEl.classList.add("visible");
+    await renderKakaoMaps(data.recommendation?.spots || []);
     setStatus(statusEl, "분석 완료");
   } catch (error) {
     if (requestId !== state.requestId) return;
-    showError(errorEl, resultEl, friendlyError(error));
+    showError(errorEl, recommendationEl, friendlyError(error));
     clearStatus(statusEl);
   } finally {
     clearInterval(timer);
@@ -436,6 +420,7 @@ document.body.addEventListener("click", (event) => {
 elements.input.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
+
   setImageFromFile(
     file,
     elements.preview,
@@ -446,21 +431,17 @@ elements.input.addEventListener("change", (event) => {
 });
 
 elements.button.addEventListener("click", analyzeMood);
+
 window.addEventListener("DOMContentLoaded", () => {
   const savedImage = sessionStorage.getItem("uploadedImage");
 
   if (!savedImage) return;
 
   state.imageBase64 = savedImage;
-
   elements.preview.src = `data:image/jpeg;base64,${savedImage}`;
-
   elements.preview.classList.remove("d-none");
-
   elements.placeholder.classList.add("d-none");
-
   elements.uploadBox.classList.add("has-image");
-
   elements.button.disabled = false;
 });
 

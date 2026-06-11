@@ -18,7 +18,8 @@ const elements = {
   button: document.querySelector("#locationRecommendBtn"),
   status: document.querySelector("#locationStatus"),
   error: document.querySelector("#locationError"),
-  result: document.querySelector("#locationResult"),
+  estimatedResult: document.querySelector("#locationEstimatedResult"),
+  recommendationResult: document.querySelector("#locationRecommendationResult"),
 };
 
 function ensureKakaoReady() {
@@ -31,6 +32,7 @@ function ensureKakaoReady() {
       window.kakao.maps.load(() => resolve(window.kakao));
       return;
     }
+
     const interval = setInterval(() => {
       if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
         clearInterval(interval);
@@ -125,7 +127,7 @@ async function renderKakaoMaps(spots, estimatedLocationName = null) {
           }
         }
       } catch (err) {
-        console.error("추정 위치 지도 렌더링 실패:", err);
+        console.error("추정 위치 지도를 불러오는 데 실패:", err);
       }
     }
   }
@@ -196,10 +198,10 @@ function friendlyError(error) {
     msg.includes("NetworkError") ||
     msg.includes("TypeError")
   ) {
-    return "서버에 연결할 수 없습니다. 서버가 정상적으로 실행 중인지 확인해 주세요.";
+    return "서버 연결에 실패했습니다. 서버가 정상적으로 실행 중인지 확인해 주세요.";
   }
   if (msg === "413" || msg.includes("too large")) {
-    return "업로드한 이미지 용량이 너무 큽니다. 더 작은 크기의 이미지로 다시 시도해 주세요.";
+    return "업로드한 이미지 용량이 너무 큽니다. 더 작은 이미지로 다시 시도해 주세요.";
   }
   if (msg === "500" || msg.includes("Internal Server Error")) {
     return "서버에서 이미지를 분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
@@ -246,7 +248,7 @@ async function renderSpots(spots) {
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
-            이 여행지로 일정 만들기
+            여행지로 일정 만들기
           </button>
         </div>
       </div>
@@ -258,60 +260,67 @@ async function renderSpots(spots) {
   return html;
 }
 
-async function renderLocationResult(data) {
-  let html = "";
+async function renderEstimatedLocation(data) {
+  if (!data.location) return "";
 
-  if (data.location) {
-    const loc = data.location;
-    const estName = loc.region || "추정된 장소";
+  const loc = data.location;
+  const estName = loc.region || "추정 위치";
 
-    html += `
-      <div class="mb-5">
-        <div class="section-label mb-3">🎯 사진 속 추정 위치</div>
-        <div class="custom-travel-container">
-          <div class="custom-travel-item" style="flex: 1 1 100% !important;">
-            <div class="travel-card">
-              <div id="estimated-map" class="travel-map"></div>
-              <div class="travel-card-body">
-                <div>
-                  <div class="travel-card-head">
-                    <h4 class="travel-card-title">${escapeHtml(estName)}</h4>
-                    <div class="meta-row mt-2">
-                      ${Number.isFinite(loc.confidence) ? `<span class="meta-badge">AI 매칭 신뢰도 ${loc.confidence * 100}%</span>` : ""}
-                    </div>
-                  </div>
-                  <p class="travel-reason">AI 분석 결과, 업로드하신 이미지와 일치하는 추정 장소입니다. 해당 장소 정보를 카카오 지도 API로 정밀 조회하여 마운트했습니다.</p>
+  return `
+    <div class="mb-5">
+      <div class="section-label mb-3"></div>
+      <div class="travel-card" style="min-height: 300px;">
+        <div class="d-flex flex-column" style="height: 100%;">
+          <div
+            id="estimated-map"
+            class="travel-map"
+            style="width: 100%; min-height: 250px;"
+          ></div>
+          <div
+            class="travel-card-body"
+            style="flex: 1 1 auto; justify-content: flex-start; gap: 14px;"
+          >
+            <div>
+              <div class="travel-card-head">
+                <h4 class="travel-card-title">${escapeHtml(estName)}</h4>
+                <div class="meta-row mt-2">
+                  ${
+                    Number.isFinite(loc.confidence)
+                      ? `<span class="meta-badge">AI 일치도 ${loc.confidence * 100}%</span>`
+                      : ""
+                  }
                 </div>
-                <button
-                  type="button"
-                  class="btn spot-action-btn mt-3"
-                  data-name="${escapeHtml(estName)}"
-                  data-region="${escapeHtml(estName)}"
-                  data-reason="사진 파일 분석을 통해 역추적된 인공지능 탐지 장소입니다."
-                >
-                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                  </svg>
-                  이 추정 위치로 일정 만들기
-                </button>
               </div>
+              <p class="travel-reason">AI 분석 결과, 업로드한 이미지와 유사한 추정 위치입니다. 이 장소 정보를 지도 API로 조회해 확인했습니다.</p>
             </div>
+            <button
+              type="button"
+              class="btn spot-action-btn mt-auto"
+              data-name="${escapeHtml(estName)}"
+              data-region="${escapeHtml(estName)}"
+              data-reason="사진 속 추정 위치를 바탕으로 생성된 추천 장소입니다."
+            >
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+              </svg>
+              이 추정 위치로 여행지 만들기
+            </button>
           </div>
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
 
-  if (data.recommendation?.spots) {
-    html += `
-      <div>
-        <div class="section-label mb-3">✨ 연관 추천 여행지</div>
-        ${await renderSpots(data.recommendation.spots)}
-      </div>
-    `;
-  }
+async function renderRecommendationResult(data) {
+  if (!data.recommendation?.spots) return "";
 
-  return html;
+  return `
+    <div>
+      <div class="section-label mb-3">추천 여행지 3곳</div>
+      ${await renderSpots(data.recommendation.spots)}
+    </div>
+  `;
 }
 
 function updatePreview(file, imageEl, placeholderEl, uploadBoxEl) {
@@ -370,21 +379,30 @@ function setImageFromFile(file, imageEl, placeholderEl, uploadBoxEl, btnEl) {
   };
 }
 
+function clearLocationOutputs() {
+  elements.estimatedResult.innerHTML = "";
+  elements.recommendationResult.innerHTML = "";
+  elements.recommendationResult.classList.remove("visible");
+}
+
 async function analyzeLocation() {
   const hintInput = elements.hint;
   const btn = elements.button;
   const statusEl = elements.status;
   const errorEl = elements.error;
-  const resultEl = elements.result;
+  const estimatedResultEl = elements.estimatedResult;
+  const recommendationResultEl = elements.recommendationResult;
   const requestId = ++state.requestId;
 
   if (!state.imageBase64) {
-    showError(errorEl, resultEl, "이미지를 먼저 업로드해 주세요.");
+    showError(errorEl, recommendationResultEl, "이미지를 먼저 업로드해 주세요");
+    estimatedResultEl.innerHTML = "";
     return;
   }
 
   clearError(errorEl);
   clearStatus(statusEl);
+  clearLocationOutputs();
   state.isLoading = true;
   btn.disabled = true;
   btn.innerHTML = SPINNER + "분석 중";
@@ -409,46 +427,34 @@ async function analyzeLocation() {
 
     if (!response.ok) {
       const errorData = await response.json();
-
       console.error("에러 메시지:", errorData.message);
       alert(errorData.message);
       return;
-      // if (response.status === 400) {
-      //   const errorData = await response.json();
-
-      //   console.log("400 응답 데이터");
-      //   console.log(errorData);
-
-      //   throw new Error(`${errorData.message}\n💡 사유: ${errorData.reason}`);
-      // }
-
-      // throw new Error(String(response.status));
     }
 
     const data = await response.json();
     configRecommendationSpots(data.recommendation?.spots || []);
     if (requestId !== state.requestId) return;
 
-    resultEl.innerHTML = await renderLocationResult(data);
+    estimatedResultEl.innerHTML = await renderEstimatedLocation(data);
+    recommendationResultEl.innerHTML = await renderRecommendationResult(data);
 
     await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);
-
     await new Promise((r) => setTimeout(r, 100));
+
     const estName = data.location?.region || null;
-    resultEl.classList.add("visible");
+    if (data.recommendation?.spots) {
+      recommendationResultEl.classList.add("visible");
+    }
     await renderKakaoMaps(data.recommendation?.spots || [], estName);
 
     setStatus(statusEl, "분석 완료");
   } catch (error) {
-    console.log("catch 진입");
-    console.log(error);
-    console.log("error.message =", error.message);
-
     if (requestId !== state.requestId) return;
 
-    showError(errorEl, resultEl, error.message);
-
+    estimatedResultEl.innerHTML = "";
+    showError(errorEl, recommendationResultEl, friendlyError(error));
     clearStatus(statusEl);
   } finally {
     clearInterval(timer);
@@ -476,6 +482,7 @@ document.body.addEventListener("click", (event) => {
 elements.input.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
+
   setImageFromFile(
     file,
     elements.preview,

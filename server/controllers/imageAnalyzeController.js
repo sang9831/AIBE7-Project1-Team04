@@ -1,4 +1,4 @@
-const dotenv = require("dotenv");
+﻿const dotenv = require("dotenv");
 const { z } = require("zod");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { PromptTemplate } = require("@langchain/core/prompts");
@@ -335,10 +335,8 @@ async function recommendTravelPlace(promptText) {
   try {
     console.time("groq-recommend");
 
-    const structuredGroq = groq.withStructuredOutput(recommendationSchema);
-
     const response = await withTimeout(
-      structuredGroq.invoke([
+      groq.invoke([
         {
           role: "user",
           content: [{ type: "text", text: promptText }],
@@ -348,7 +346,21 @@ async function recommendTravelPlace(promptText) {
     );
     console.timeEnd("groq-recommend");
 
-    return response;
+    const raw = readModelText(response.content);
+    const jsonText = extractJson(raw);
+    const parsed = JSON.parse(jsonText);
+
+    // 스키마 검증 및 중복 제거
+    const validated = recommendationSchema.parse(parsed);
+    const seen = new Set();
+    validated.spots = validated.spots.filter((spot) => {
+      const key = spot.name.trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return validated;
   } catch (error) {
     console.error("recommendTravelPlace failed:", error);
     return fallbackRecommendation("대한민국");
@@ -587,6 +599,10 @@ ${extra || "(없음)"}
    - 순수한 관광 목적이 아닌 공공 행정 기관, 국가 건물, 지방 자치 단체 청사는 **절대로** 추천하지 마십시오.
    - 예시 오류 교정: (X) 서울시청, 부산시청, 제주도청, 종로구청, 울릉군청 등 모든 형태의 시청/도청/구청/군청/주민센터/정부청사 및 법원 등 공공 업무 시설은 제외합니다. 다만, 역사적 가치가 있어 관광지화된 장소(예: '구 서울역사', '덕수궁 석조전')는 허용됩니다.
 
+6. 중복 추천 절대 금지 (매우 중요):
+   - 대안으로 제시하는 7곳의 여행지는 반드시 서로 다른 장소여야 합니다. 
+   - 동일한 명소를 이름만 바꾸거나 완전히 똑같은 장소를 절대 중복해서 배열에 넣지 마십시오.
+
 
 출력 전 반드시 자가검증:
 - [ ] 이 장소를 카카오맵에 검색하면 나오는가?
@@ -611,6 +627,17 @@ ${extra || "(없음)"}
     console.log("-----------------");
     console.log(recommendation.spots);
     console.log("-----------------");
+
+    console.log("AI 추천 원본 목록:", recommendation.spots); // 이 로그를 심어 실제로 카카오 검증 전 목록을 확인해보세요.
+    for (const spot of recommendation.spots) {
+      if (validSpots.length >= 3) break;
+
+      if (await verifyPlaceWithKakao(spot)) {
+        validSpots.push(spot);
+      } else {
+        console.log(`카카오 맵 검증 실패로 제외된 장소: ${spot.name}`);
+      }
+    }
 
     for (const spot of recommendation.spots) {
       if (validSpots.length >= 3) break;

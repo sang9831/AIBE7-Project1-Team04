@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -15,7 +15,6 @@
     <div id="site-header"></div>
 
     <main>
-      <!-- ═══════════ HERO ═══════════ -->
       <section class="mood-hero">
         <div class="mood-hero-inner">
           <div class="mood-hero-badge">
@@ -23,25 +22,22 @@
             AI 분위기 분석
           </div>
           <h1 class="mood-hero-title">
-            사진의 분위기를 해석해<br />어울리는 여행지를 추천해드려요
+            사진의 분위기를 해석하고<br />어울리는 여행지를 추천해 드립니다
           </h1>
           <p class="mood-hero-desc">
-            마음에 드는 분위기의 사진을 업로드해보세요.<br />
-            AI가 색감·날씨·지형·무드를 분석해 비슷한 감성의 여행지를 추천합니다.
+            마음에 드는 분위기의 사진을 업로드해 주세요.<br />
+            AI가 색감, 장면, 감성을 분석해 어울리는 여행지를 추천합니다.
           </p>
         </div>
       </section>
 
-      <!-- ═══════════ FORM ═══════════ -->
       <section class="mood-section">
         <div class="mood-container">
-          <button type="button" class="back-btn">← 홈으로</button>
+          <button type="button" class="back-btn">뒤로가기</button>
 
           <div class="mood-card">
             <div class="mood-card-grid">
-
-              <!-- 왼쪽: 이미지 업로드 -->
-              <div>
+              <div class="mood-form-col">
                 <p class="mood-section-label">이미지 업로드</p>
                 <input
                   id="moodImageInput"
@@ -49,11 +45,7 @@
                   accept="image/*"
                   class="mood-file-input"
                 />
-                <label
-                  for="moodImageInput"
-                  id="moodUploadBox"
-                  class="upload-box"
-                >
+                <label for="moodImageInput" id="moodUploadBox" class="upload-box">
                   <div id="moodPlaceholder" class="upload-placeholder">
                     <svg
                       width="40"
@@ -69,9 +61,7 @@
                         d="M4 16l4.5-4.5a2 2 0 012.8 0L16 16m-2-2l1.5-1.5a2 2 0 012.8 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <p class="upload-placeholder-text">
-                      클릭하여 이미지를 업로드해주세요
-                    </p>
+                    <p class="upload-placeholder-text">사진을 업로드해 주세요</p>
                     <p class="upload-placeholder-sub">JPG, PNG · 최대 10MB</p>
                   </div>
                   <img
@@ -80,25 +70,18 @@
                     alt="분위기 추천 이미지 미리보기"
                   />
                 </label>
-              </div>
-
-              <!-- 오른쪽: 입력 + 액션 -->
-              <div class="mood-form-col">
-                <p class="mood-section-label">추가 정보</p>
 
                 <div class="mood-field">
-                  <label for="moodExtraInput" class="mood-field-label"
-                    >추가사항용 텍스트</label
-                  >
+                  <label for="moodExtraInput" class="mood-field-label">추가사항 텍스트</label>
                   <input
                     id="moodExtraInput"
                     type="text"
                     class="mood-input"
-                    placeholder="예: 조용한 곳, 사진 명소, 커플 여행, 겨울 분위기"
+                    placeholder="예: 조용한 산책, 바다, 노을, 감성적인 느낌"
                   />
                 </div>
 
-                <div class="mood-actions">
+                <div class="mood-actions d-flex flex-column align-items-stretch">
                   <button
                     id="moodRecommendBtn"
                     type="button"
@@ -113,10 +96,16 @@
                 <div id="moodError" class="error-box"></div>
               </div>
 
+              <div class="mood-form-col">
+                <p class="mood-section-label">분위기 해석</p>
+                <div style="flex: 1; display: flex; align-items: center;">
+                  <div id="moodInterpretationResult" style="width: 100%;"></div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div id="moodResult" class="result"></div>
+          <div id="moodRecommendationResult" class="result"></div>
         </div>
       </section>
     </main>

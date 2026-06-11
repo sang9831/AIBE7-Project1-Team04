@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -15,7 +15,6 @@
     <div id="site-header"></div>
 
     <main>
-      <!-- ═══════════ HERO ═══════════ -->
       <section class="loc-hero">
         <div class="loc-hero-inner">
           <div class="loc-hero-badge">
@@ -23,25 +22,22 @@
             AI 위치 분석
           </div>
           <h1 class="loc-hero-title">
-            사진 속 장소를 추정해<br />여행지를 추천해드려요
+            사진 속 장소를 추정하고<br />여행지를 추천해 드립니다
           </h1>
           <p class="loc-hero-desc">
-            장소 사진을 업로드하고 힌트를 적어주세요.<br />
-            AI가 사진의 위치를 추정한 뒤 그 지역에 어울리는 여행지를 추천합니다.
+            사진을 업로드하고 힌트를 입력해 주세요.<br />
+            AI가 사진 속 위치를 추정하고, 그 주변에서 어울리는 여행지를 추천합니다.
           </p>
         </div>
       </section>
 
-      <!-- ═══════════ FORM ═══════════ -->
       <section class="loc-section">
         <div class="loc-container">
-          <button type="button" class="back-btn">← 홈으로</button>
+          <button type="button" class="back-btn">뒤로가기</button>
 
           <div class="loc-card">
             <div class="loc-card-grid">
-
-              <!-- 왼쪽: 이미지 업로드 -->
-              <div>
+              <div class="loc-form-col">
                 <p class="loc-section-label">이미지 업로드</p>
                 <input
                   id="locationImageInput"
@@ -69,9 +65,7 @@
                         d="M4 16l4.5-4.5a2 2 0 012.8 0L16 16m-2-2l1.5-1.5a2 2 0 012.8 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <p class="upload-placeholder-text">
-                      클릭하여 이미지를 업로드해주세요
-                    </p>
+                    <p class="upload-placeholder-text">사진을 업로드해 주세요</p>
                     <p class="upload-placeholder-sub">JPG, PNG · 최대 10MB</p>
                   </div>
                   <img
@@ -80,25 +74,18 @@
                     alt="위치 추천 이미지 미리보기"
                   />
                 </label>
-              </div>
-
-              <!-- 오른쪽: 입력 + 액션 -->
-              <div class="loc-form-col">
-                <p class="loc-section-label">추가 정보</p>
 
                 <div class="loc-field">
-                  <label for="locationHintInput" class="loc-field-label"
-                    >힌트용 텍스트</label
-                  >
+                  <label for="locationHintInput" class="loc-field-label">힌트 텍스트</label>
                   <input
                     id="locationHintInput"
                     type="text"
                     class="loc-input"
-                    placeholder="예: 바다, 유럽풍 건물, 골목길, 여행 시기"
+                    placeholder="예: 바다, 좁은 골목, 야자수"
                   />
                 </div>
 
-                <div class="loc-actions">
+                <div class="loc-actions d-flex flex-column align-items-stretch">
                   <button
                     id="locationRecommendBtn"
                     type="button"
@@ -112,7 +99,7 @@
                     type="button"
                     class="btn-loc-secondary d-none"
                   >
-                    분위기 기반 추천 →
+                    분위기 기반 추천 받기
                   </button>
                 </div>
 
@@ -120,10 +107,14 @@
                 <div id="locationError" class="error-box"></div>
               </div>
 
+              <div class="loc-form-col">
+                <p class="loc-section-label">사진 속 추정 위치</p>
+                <div id="locationEstimatedResult"></div>
+              </div>
             </div>
           </div>
 
-          <div id="locationResult" class="result"></div>
+          <div id="locationRecommendationResult" class="result"></div>
         </div>
       </section>
     </main>

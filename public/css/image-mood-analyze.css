@@ -40,8 +40,15 @@
 }
 
 @keyframes moodPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.45; transform: scale(0.8); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
 }
 
 .mood-hero-title {
@@ -81,7 +88,9 @@
   color: var(--color-subtext);
   font-size: 0.85rem;
   font-weight: 600;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .back-btn:hover {
@@ -136,7 +145,10 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    background 0.2s;
 }
 
 .upload-box:hover {
@@ -206,7 +218,9 @@
   font-family: inherit;
   background: #fff;
   color: var(--color-text);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .mood-input:focus {
@@ -236,7 +250,9 @@
   cursor: pointer;
   background: var(--color-accent);
   color: #fff;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 }
 
 .btn-mood-primary:hover:not(:disabled) {
@@ -264,10 +280,18 @@
 }
 
 @keyframes moodDots {
-  0%   { content: ""; }
-  25%  { content: "."; }
-  50%  { content: ".."; }
-  75%  { content: "..."; }
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
 }
 
 .error-box {
@@ -319,7 +343,7 @@
   background: rgba(255, 107, 90, 0.08);
   border: 1px solid rgba(255, 107, 90, 0.2);
   color: var(--color-accent);
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -343,7 +367,9 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
 }
 
 .travel-card:hover {
@@ -411,7 +437,10 @@
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .spot-action-btn:hover {
@@ -426,21 +455,45 @@
 }
 
 @keyframes moodFadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ─────────────── RESPONSIVE ─────────────── */
 @media (max-width: 900px) {
-  .mood-hero       { padding: 48px 20px 36px; }
-  .mood-section    { padding: 32px 20px 64px; }
-  .mood-card       { padding: 24px; }
-  .mood-card-grid  { grid-template-columns: 1fr; gap: 24px; }
-  .upload-box      { min-height: 240px; }
-  .preview         { min-height: 240px; }
-  .custom-travel-container { grid-template-columns: 1fr; gap: 16px; }
+  .mood-hero {
+    padding: 48px 20px 36px;
+  }
+  .mood-section {
+    padding: 32px 20px 64px;
+  }
+  .mood-card {
+    padding: 24px;
+  }
+  .mood-card-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .upload-box {
+    min-height: 240px;
+  }
+  .preview {
+    min-height: 240px;
+  }
+  .custom-travel-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 @media (max-width: 1024px) and (min-width: 901px) {
-  .custom-travel-container { grid-template-columns: repeat(2, 1fr); }
+  .custom-travel-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
