@@ -21,13 +21,13 @@ const gemma = new ChatGoogleGenerativeAI({
   temperature: 0,
 });
 
-const groq = new ChatGroq({
+const groqFallback = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
   model: "llama-3.3-70b-versatile",
   temperature: 0,
 });
 
-const groqFallback = new ChatGroq({
+const groq = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
   model: "openai/gpt-oss-120b",
   temperature: 0,
@@ -606,7 +606,7 @@ async function confirmLocation(req, res, next) {
 
     const safeLocation = {
       region: location.trim(),
-      confidence: 1,
+      confidence: 0,
     };
 
     const recommendation = await getVerifiedRecommendation(safeLocation.region);

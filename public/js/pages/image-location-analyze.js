@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://aibe7-project1-team04.onrender.com/";
 const SPINNER =
   '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
 
